@@ -15,7 +15,7 @@ fn main() {
 "
 This is very important document!
 {{each users as user}}
-    {{if !user.departed and user.name != \"unclose\" skip}}
+    {{if !user.departed & user.name != \"unclose\" skip}}
         {{user.name}} is available!
     {{else}}
         {{user.name}} is departed!

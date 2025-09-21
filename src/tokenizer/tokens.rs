@@ -1,22 +1,25 @@
 use crate::shared::data_types::SupportedDataType;
 
 #[derive(Debug)]
-pub enum Sign {
-  Add,
-  Sub,
-  Div,
-  Mul,
+pub enum SingleChar {
+  Plus,
+  Minus,
+  Slash,
+  Star,
 
-  And,
-  Or,
+  Ampersand,
+  Pipe,
+  Excl,
+}
 
+#[derive(Debug)]
+pub enum Compare {
   Eq,
   Ne,
   Ge,
   Gt,
   Le,
   Lt,
-  Not,
 }
 
 #[derive(Debug)]
@@ -54,7 +57,9 @@ pub enum Token {
   
   Keyword(Keyword),
   Bracket(Bracket),
-  Sign(Sign),
+  Single(SingleChar),
+  Compare(Compare),
+  // Sign(Sign),
   // Unknown(char),
   Error(TokenError),
   Nothing,

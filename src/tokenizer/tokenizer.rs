@@ -4,7 +4,8 @@ use crate::tokenizer::tokens::{
   Bracket,
   TokenError,
   Keyword,
-  Sign
+  SingleChar,
+  Compare,
 };
 
 #[derive(Debug)]
@@ -167,32 +168,32 @@ impl Tokenizer {
 
     match self.pass() {
       Some(c) => match c {
-        '+' => Token::Sign(Sign::Add),
-        '-' => Token::Sign(Sign::Sub),
-        '/' => Token::Sign(Sign::Div),
-        '*' => Token::Sign(Sign::Mul),
-        '&' => Token::Sign(Sign::And),
-        '|' => Token::Sign(Sign::Or),
+        '+' => Token::Single(SingleChar::Plus),
+        '-' => Token::Single(SingleChar::Minus),
+        '/' => Token::Single(SingleChar::Slash),
+        '*' => Token::Single(SingleChar::Star),
+        '&' => Token::Single(SingleChar::Ampersand),
+        '|' => Token::Single(SingleChar::Pipe),
         '(' => Token::Bracket(Bracket::RoundOpen),
         ')' => Token::Bracket(Bracket::RoundClose),
         '<' => match self.pass() {
-            Some('=') => Token::Sign(Sign::Le),
-            None => Token::Sign(Sign::Lt),
+            Some('=') => Token::Compare(Compare::Le),
+            None => Token::Compare(Compare::Lt),
             _ => {
               self.rollback();
-              return Token::Sign(Sign::Lt);
+              return Token::Compare(Compare::Lt);
             }
           },
         '>' => match self.pass() {
-            Some('=') => Token::Sign(Sign::Ge),
-            None => Token::Sign(Sign::Gt),
+            Some('=') => Token::Compare(Compare::Ge),
+            None => Token::Compare(Compare::Gt),
             _ => {
               self.rollback();
-              return Token::Sign(Sign::Gt);
+              return Token::Compare(Compare::Gt);
             }
           },
         '=' => match self.pass() {
-            Some('=') => Token::Sign(Sign::Eq),
+            Some('=') => Token::Compare(Compare::Eq),
             None => Token::Error(TokenError::Unknown('=')),
             _ => {
               self.rollback();
@@ -200,11 +201,11 @@ impl Tokenizer {
             }
           },
         '!' => match self.pass() {
-            Some('=') => Token::Sign(Sign::Ne),
-            None => Token::Sign(Sign::Not),
+            Some('=') => Token::Compare(Compare::Ne),
+            None => Token::Single(SingleChar::Excl),
             _ => {
               self.rollback();
-              return Token::Sign(Sign::Not);
+              return Token::Single(SingleChar::Excl);
             }
           },
         '}' => match self.pass() {
@@ -284,8 +285,7 @@ mod tests {
   fn should_tokenize_raw() {
     let _raw = String::from("
       Just a simple raw. And it could be messsy:$#@123982mjsa_-sad1```\"sadasd\"
-      But there is nothing to be afraid of. {} teasing....a}}}}}}}{ { {
-    ");
+      But there is nothing to be afraid of. {} teasing....a}}}}}}}{ { {");
 
     let template = _raw.clone();
 
