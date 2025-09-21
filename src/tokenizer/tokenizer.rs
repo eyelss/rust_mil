@@ -408,4 +408,74 @@ mod tests {
       Token::Error(TokenError::UnclosedStringSeq)
     ));
   }
+
+  #[test]
+  fn should_tokenize_symbols() {
+    let tokenizer = Tokenizer::new(String::from("{{+ ! . - * / > >= < <= == !=}}"));
+
+    let tokens: Vec<Token> = tokenizer.collect();
+
+    match &tokens[..] {
+      [
+        plus, 
+        excl, 
+        dot, 
+        minus, 
+        star,
+        slash,
+        gt,
+        ge,
+        lt,
+        le,
+        eq,
+        ne
+      ] => {
+        assert!(matches!(plus, Token::Single(SingleChar::Plus)));
+        assert!(matches!(excl, Token::Single(SingleChar::Excl)));
+        assert!(matches!(dot, Token::Single(SingleChar::Dot)));
+        assert!(matches!(minus, Token::Single(SingleChar::Minus)));
+        assert!(matches!(star, Token::Single(SingleChar::Star)));
+        assert!(matches!(slash, Token::Single(SingleChar::Slash)));
+        assert!(matches!(gt, Token::Compare(Compare::Gt)));
+        assert!(matches!(ge, Token::Compare(Compare::Ge)));
+        assert!(matches!(lt, Token::Compare(Compare::Lt)));
+        assert!(matches!(le, Token::Compare(Compare::Le)));
+        assert!(matches!(eq, Token::Compare(Compare::Eq)));
+        assert!(matches!(ne, Token::Compare(Compare::Ne)));
+      },
+      _ => {
+        assert!(false);
+      }
+    }
+  }
+  
+  #[test]
+  fn should_tokenize_keywords() {
+    let tokenizer = Tokenizer::new(String::from("{{if else endif each as endeach skip}}"));
+
+    let tokens: Vec<Token> = tokenizer.collect();
+
+    match &tokens[..] {
+      [
+        if_kword, 
+        else_kword, 
+        endif_kword, 
+        each_kword, 
+        as_kword, 
+        endeach_kword, 
+        skip_kword
+      ] => {
+        assert!(matches!(if_kword, Token::Keyword(Keyword::If)));
+        assert!(matches!(else_kword, Token::Keyword(Keyword::Else)));
+        assert!(matches!(endif_kword, Token::Keyword(Keyword::EndIf)));
+        assert!(matches!(each_kword, Token::Keyword(Keyword::Each)));
+        assert!(matches!(as_kword, Token::Keyword(Keyword::As)));
+        assert!(matches!(endeach_kword, Token::Keyword(Keyword::EndEach)));
+        assert!(matches!(skip_kword, Token::Keyword(Keyword::Skip)));
+      },
+      _ => {
+        assert!(false);
+      }
+    }
+  }
 }
