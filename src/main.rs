@@ -1,6 +1,7 @@
 use std::iter;
 
-use crate::tokenizer::tokenizer::{Token, Tokenizer};
+use crate::tokenizer::tokenizer::Tokenizer;
+use crate::tokenizer::tokens::Token;
 
 mod config;
 mod source;
