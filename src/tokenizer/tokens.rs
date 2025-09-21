@@ -7,6 +7,9 @@ pub enum Sign {
   Div,
   Mul,
 
+  And,
+  Or,
+
   Eq,
   Ne,
   Ge,
@@ -31,9 +34,6 @@ pub enum Keyword {
   Each,
   As,
   EndEach,
-
-  And,
-  Or,
 
   Skip,
 }

@@ -113,8 +113,6 @@ impl Tokenizer {
       "if" => Token::Keyword(Keyword::If),
       "else" => Token::Keyword(Keyword::Else),
       "endif" => Token::Keyword(Keyword::EndIf),
-      "and" => Token::Keyword(Keyword::And),
-      "or" => Token::Keyword(Keyword::Or),
       "each" => Token::Keyword(Keyword::Each),
       "as" => Token::Keyword(Keyword::As),
       "endeach" => Token::Keyword(Keyword::EndEach),
@@ -173,6 +171,8 @@ impl Tokenizer {
         '-' => Token::Sign(Sign::Sub),
         '/' => Token::Sign(Sign::Div),
         '*' => Token::Sign(Sign::Mul),
+        '&' => Token::Sign(Sign::And),
+        '|' => Token::Sign(Sign::Or),
         '(' => Token::Bracket(Bracket::RoundOpen),
         ')' => Token::Bracket(Bracket::RoundClose),
         '<' => match self.pass() {
