@@ -102,7 +102,7 @@ impl Tokenizer {
     let ptr_start = self.ptr;
 
     while let Some(ch) = self.pass() {
-      if !ch.is_alphabetic() && !ch.is_numeric() && ch != '_' && ch != '.' {
+      if !ch.is_alphabetic() && !ch.is_numeric() && ch != '_' {
         self.rollback();
         break;
       }
@@ -174,6 +174,7 @@ impl Tokenizer {
         '*' => Token::Single(SingleChar::Star),
         '&' => Token::Single(SingleChar::Ampersand),
         '|' => Token::Single(SingleChar::Pipe),
+        '.' => Token::Single(SingleChar::Dot),
         '(' => Token::Bracket(Bracket::RoundOpen),
         ')' => Token::Bracket(Bracket::RoundClose),
         '<' => match self.pass() {

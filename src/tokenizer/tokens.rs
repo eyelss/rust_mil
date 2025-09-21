@@ -6,10 +6,10 @@ pub enum SingleChar {
   Minus,
   Slash,
   Star,
-
   Ampersand,
   Pipe,
   Excl,
+  Dot,
 }
 
 #[derive(Debug)]
