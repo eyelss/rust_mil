@@ -15,7 +15,7 @@ fn main() {
 "
 This is very important document!
 {{each users as user}}
-    {{if !user.departed & user.name != \"unclose\" skip}}
+    {{if !user.departed & user.role != \"admin\" skip}}
         {{user.name}} is available!
     {{else}}
         {{user.name}} is departed!
@@ -24,9 +24,7 @@ This is very important document!
 ";
     let tokenizer = Tokenizer::new(String::from(line));
 
-    let tokens: Vec<Token> = tokenizer.collect();
-    for token in tokens {
-        println!("{:?}", token);
+    for (idx, token) in tokenizer.enumerate() {
+        println!("{}.\t{:?}", idx, token);
     }
-    // print!("{:?}", tokens);
 }

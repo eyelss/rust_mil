@@ -27,8 +27,8 @@ impl Tokenizer {
   }
 
   fn pass(&mut self) -> Option<char> {
-    match self.raw_string.char_indices().nth(self.ptr) {
-      Some((idx, ch)) => {
+    match self.raw_string.chars().nth(self.ptr) {
+      Some(ch) => {
         self.ptr += 1;
         Some(ch)
       },
@@ -379,17 +379,17 @@ mod tests {
     
     assert_eq!(tokens.len(), 5);
 
-    let raw = String::from(" ");
-    let var1_value = String::from("var_1");
-    let var2_value = String::from("var_2");
+    let _raw = String::from(" ");
+    let _var1_value = String::from("var_1");
+    let _var2_value = String::from("var_2");
 
     match &tokens[..] {
       [raw1, var1, raw2, var2, raw3] => {
-        assert!(matches!(raw1, Token::Raw(raw)));
-        assert!(matches!(raw2, Token::Raw(raw)));
-        assert!(matches!(raw3, Token::Raw(raw)));
-        assert!(matches!(var1, Token::Identifier(var1_value)));
-        assert!(matches!(var2, Token::Identifier(var2_value)));
+        assert!(matches!(raw1, Token::Raw(_raw)));
+        assert!(matches!(raw2, Token::Raw(_raw)));
+        assert!(matches!(raw3, Token::Raw(_raw)));
+        assert!(matches!(var1, Token::Identifier(_var1_value)));
+        assert!(matches!(var2, Token::Identifier(_var2_value)));
       },
       _ => {
         assert!(false);
