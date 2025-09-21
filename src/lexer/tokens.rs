@@ -1,4 +1,4 @@
-use crate::shared::data_types::SupportedDataType;
+use crate::shared::data_types::PrimitiveType;
 
 #[derive(Debug)]
 pub enum SingleChar {
@@ -52,7 +52,7 @@ pub enum TokenError {
 #[derive(Debug)]
 pub enum Token {
   Raw(String),
-  Literal(SupportedDataType),
+  Literal(PrimitiveType),
   Identifier(String),
   
   Keyword(Keyword),

@@ -1,14 +1,17 @@
 use std::iter;
 
-use crate::tokenizer::tokenizer::Tokenizer;
-use crate::tokenizer::tokens::Token;
+use crate::lexer::tokenizer::Tokenizer;
+use crate::lexer::tokens::{Token, SingleChar};
+use crate::syntax::types::{ASTNode, BinaryExpression, CalculatableExpression, Expression, UnaryExpression};
+use crate::shared::data_types::PrimitiveType;
+use crate::syntax::visitor::Visitable;
 
 mod config;
 mod source;
 mod errors;
-mod parser;
+mod syntax;
 mod shared;
-mod tokenizer;
+mod lexer;
 
 fn main() {
     let line = 
@@ -22,9 +25,29 @@ This is very important document!
     {{endif}}
 {{endeach}}
 ";
-    let tokenizer = Tokenizer::new(String::from(line));
+    let bin_expr = Expression::Inner(CalculatableExpression::Binary(BinaryExpression {
+        operation: Token::Single(SingleChar::Plus),
+        left: Box::new(Expression::Inner(CalculatableExpression::Unary(UnaryExpression { 
+            operation: Token::Single(SingleChar::Minus),
+            argument: Box::new(Expression::Leaf(PrimitiveType::Integer(77)))
+        }))),
+        right: Box::new(Expression::Inner(CalculatableExpression::Binary(BinaryExpression {
+            operation: Token::Single(SingleChar::Plus),
+            left: Box::new(Expression::Leaf(PrimitiveType::Integer(10))),
+            right: Box::new(Expression::Leaf(PrimitiveType::Integer(15))),
+        }))),
+    }));
 
-    for (idx, token) in tokenizer.enumerate() {
-        println!("{}.\t{:?}", idx, token);
-    }
+    println!("{}", bin_expr.accept(&syntax::visitor::Visitor {}));
+
+    let un_expr = Expression::Inner(CalculatableExpression::Unary(UnaryExpression {
+        operation: Token::Single(lexer::tokens::SingleChar::Minus),
+        argument: Box::new(Expression::Leaf(PrimitiveType::Integer(10))),
+    }));
+
+    // let tokenizer = Tokenizer::new(String::from(line));
+
+    // for (idx, token) in tokenizer.enumerate() {
+    //     println!("{}.\t{:?}", idx, token);
+    // }
 }

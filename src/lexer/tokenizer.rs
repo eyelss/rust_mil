@@ -1,5 +1,5 @@
-use crate::shared::data_types::SupportedDataType;
-use crate::tokenizer::tokens::{
+use crate::shared::data_types::PrimitiveType;
+use crate::lexer::tokens::{
   Token,
   Bracket,
   TokenError,
@@ -52,7 +52,7 @@ impl Tokenizer {
       if ch == '"' {
         let str = &self.raw_string[ptr_start..self.ptr-1];
 
-        return Token::Literal(SupportedDataType::String(String::from(str)));
+        return Token::Literal(PrimitiveType::String(String::from(str)));
       } 
     }
 
@@ -81,14 +81,14 @@ impl Tokenizer {
           let num_result = str.parse::<f64>();
 
           return match num_result {
-            Ok(num) => Token::Literal(SupportedDataType::Float(num)),
+            Ok(num) => Token::Literal(PrimitiveType::Float(num)),
             Err(_) => Token::Error(TokenError::WrongNumberSeq)
           }
         } else {
           
           let num_result = str.parse::<i64>();
           return match num_result {
-            Ok(num) => Token::Literal(SupportedDataType::Integer(num)),
+            Ok(num) => Token::Literal(PrimitiveType::Integer(num)),
             Err(_) => Token::Error(TokenError::WrongNumberSeq)
           }
         }
@@ -118,8 +118,8 @@ impl Tokenizer {
       "as" => Token::Keyword(Keyword::As),
       "endeach" => Token::Keyword(Keyword::EndEach),
       "skip" => Token::Keyword(Keyword::Skip),
-      "true" => Token::Literal(SupportedDataType::Boolean(true)),
-      "false" => Token::Literal(SupportedDataType::Boolean(false)),
+      "true" => Token::Literal(PrimitiveType::Boolean(true)),
+      "false" => Token::Literal(PrimitiveType::Boolean(false)),
       another => Token::Identifier(String::from(another))
     }
   }
@@ -328,7 +328,7 @@ mod tests {
     assert_eq!(tokens.len(), 1);
     assert!(matches!(
       tokens.first().unwrap(), 
-      Token::Literal(SupportedDataType::String(_string_value))
+      Token::Literal(PrimitiveType::String(_string_value))
     ));
   }
 
@@ -341,7 +341,7 @@ mod tests {
     assert_eq!(tokens.len(), 1);
     assert!(matches!(
       tokens.first().unwrap(), 
-      Token::Literal(SupportedDataType::Float(15.0))
+      Token::Literal(PrimitiveType::Float(15.0))
     ));
   }
 
@@ -354,7 +354,7 @@ mod tests {
     assert_eq!(tokens.len(), 1);
     assert!(matches!(
       tokens.first().unwrap(), 
-      Token::Literal(SupportedDataType::Integer(150))
+      Token::Literal(PrimitiveType::Integer(150))
     ));
   }
 
@@ -367,7 +367,7 @@ mod tests {
     assert_eq!(tokens.len(), 1);
     assert!(matches!(
       tokens.first().unwrap(), 
-      Token::Literal(SupportedDataType::Boolean(true))
+      Token::Literal(PrimitiveType::Boolean(true))
     ));
   }
 

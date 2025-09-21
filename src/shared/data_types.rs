@@ -1,5 +1,5 @@
 #[derive(Debug)]
-pub enum SupportedDataType {
+pub enum PrimitiveType {
   String(String),
   Boolean(bool),
   Integer(i64),
