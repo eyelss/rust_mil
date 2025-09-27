@@ -1,7 +1,5 @@
-use crate::{
-  syntax::types::{Expression, CalculatableExpression},
-  shared::data_types::PrimitiveType
-};
+use crate::shared::data_types::PrimitiveType;
+use super::expression::{Expression, CalculatableExpression};
 
 pub trait Visitable {
   fn accept(&self, visitor: &Visitor) -> String;

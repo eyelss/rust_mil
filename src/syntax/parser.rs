@@ -1,11 +1,13 @@
-use crate::shared::data_types::PrimitiveType;
 use crate::source::data_source::DataSource;
-use crate::lexer::tokenizer::Tokenizer;
 use crate::lexer::tokens::{Token};
-use crate::syntax::types::{ASTNode, CalculatableExpression, Expression};
-use crate::syntax::visitor::{Visitable, Visitor};
+use super::ast::ASTNode;
+use super::expression::Expression;
+use super::visitor::{Visitable, Visitor};
 
-pub struct TemplateParser;
+pub struct TemplateParser {
+  tokens: Vec<Token>,
+  ptr: usize,
+}
 
 impl Visitable for Expression {
   fn accept(&self, v: &Visitor) -> String {
@@ -15,12 +17,23 @@ impl Visitable for Expression {
 
 impl TemplateParser {
   fn parse<T: DataSource>(
-    template: String,
+    &mut self,
     source: T
   ) -> ASTNode {
-    // let tokenizer = Tokenizer::new(template);
-    // let tokens: Vec<Token> = tokenizer.collect();
-    // source.get("da")
+    // for token in &self.tokens {
+    //   match token {
+    //       Token::Identifier(identifier) => {}
+    //   }
+    // }
     todo!()
+  }
+
+  fn new(
+    tokens: Vec<Token>
+  ) -> TemplateParser {
+    TemplateParser { 
+      tokens: tokens,
+      ptr: 0,
+    }
   }
 }
