@@ -1,481 +1,270 @@
+use crate::lexer::tokens::{Bracket, Compare, Keyword, SingleChar, Token, TokenError};
 use crate::shared::data_types::PrimitiveType;
-use crate::lexer::tokens::{
-  Token,
-  Bracket,
-  TokenError,
-  Keyword,
-  SingleChar,
-  Compare,
-};
 
 #[derive(Debug)]
 enum TokenizerState {
-  Raw,
-  Code
+    Raw,
+    Code,
 }
 
 #[derive(Debug)]
 pub struct Tokenizer {
-  state: TokenizerState,
-  raw_string: String,
-  ptr: usize,
+    state: TokenizerState,
+    raw_string: String,
+    ptr: usize,
 }
 
 impl Tokenizer {
-  fn rollback(&mut self) {
-    self.ptr -= 1;
-  }
-
-  fn pass(&mut self) -> Option<char> {
-    match self.raw_string.chars().nth(self.ptr) {
-      Some(ch) => {
-        self.ptr += 1;
-        Some(ch)
-      },
-      _ => None
-    }
-  }
-
-  fn skip_spaces(&mut self) {
-    while let Some(ch) = self.pass() {
-      if !ch.is_whitespace() {
+    fn rollback(&mut self) {
         self.ptr -= 1;
-        break;
-      }
-    }
-  }
-
-  fn tokenize_string(&mut self) -> Token {
-    let ptr_start = self.ptr;
-
-    while let Some(ch) = self.pass() {
-      if ch == '"' {
-        let str = &self.raw_string[ptr_start..self.ptr-1];
-
-        return Token::Literal(PrimitiveType::String(String::from(str)));
-      } 
     }
 
-    return Token::Error(TokenError::UnclosedStringSeq);
-  }
-
-  fn tokenize_number(&mut self) -> Token {
-    let ptr_start = self.ptr;
-    let mut floated = false;
-
-    while let Some(ch) = self.pass() {
-      if ch == '.' {
-        if floated {
-          return Token::Error(TokenError::WrongNumberSeq);
-        } else {
-          floated = true;
+    fn pass(&mut self) -> Option<char> {
+        match self.raw_string.chars().nth(self.ptr) {
+            Some(ch) => {
+                self.ptr += 1;
+                Some(ch)
+            }
+            _ => None,
         }
-      } 
+    }
 
-      if !ch.is_numeric() && ch != '.' {
-        self.rollback();
+    fn peek(&self, offset: usize) -> Option<char> {
+        self.raw_string.chars().nth(self.ptr + offset)
+    }
 
-        let str = &self.raw_string[ptr_start..self.ptr];
-        
-        if floated {
-          let num_result = str.parse::<f64>();
-
-          return match num_result {
-            Ok(num) => Token::Literal(PrimitiveType::Float(num)),
-            Err(_) => Token::Error(TokenError::WrongNumberSeq)
-          }
-        } else {
-          
-          let num_result = str.parse::<i64>();
-          return match num_result {
-            Ok(num) => Token::Literal(PrimitiveType::Integer(num)),
-            Err(_) => Token::Error(TokenError::WrongNumberSeq)
-          }
+    fn skip_spaces(&mut self) {
+        while let Some(ch) = self.pass() {
+            if !ch.is_whitespace() {
+                self.ptr -= 1;
+                break;
+            }
         }
-      }
     }
 
-    return Token::Error(TokenError::WrongNumberSeq);
-  }
+    fn tokenize_string(&mut self) -> Token {
+        let ptr_start = self.ptr;
 
-  fn tokenize_word(&mut self) -> Token {
-    let ptr_start = self.ptr;
+        while let Some(ch) = self.pass() {
+            if ch == '"' {
+                let str = &self.raw_string[ptr_start..self.ptr - 1];
 
-    while let Some(ch) = self.pass() {
-      if !ch.is_alphabetic() && !ch.is_numeric() && ch != '_' {
-        self.rollback();
-        break;
-      }
+                return Token::Literal(PrimitiveType::String(String::from(str)));
+            }
+        }
+
+        Token::Error(TokenError::UnclosedStringSeq)
     }
 
-    let word = &self.raw_string[ptr_start..self.ptr];
+    fn tokenize_number(&mut self) -> Token {
+        let ptr_start = self.ptr;
+        let mut floated = false;
 
-    match word {
-      "if" => Token::Keyword(Keyword::If),
-      "else" => Token::Keyword(Keyword::Else),
-      "endif" => Token::Keyword(Keyword::EndIf),
-      "each" => Token::Keyword(Keyword::Each),
-      "as" => Token::Keyword(Keyword::As),
-      "endeach" => Token::Keyword(Keyword::EndEach),
-      "skip" => Token::Keyword(Keyword::Skip),
-      "true" => Token::Literal(PrimitiveType::Boolean(true)),
-      "false" => Token::Literal(PrimitiveType::Boolean(false)),
-      another => Token::Identifier(String::from(another))
-    }
-  }
-
-  fn tokenize_raw(&mut self) -> Token {
-    let ptr_start = self.ptr;
-    
-    while let Some(ch) = self.pass() {
-      if ch == '{' {
-        match self.pass() {
-            Some('{') => {
-              self.state = TokenizerState::Code;
-              if ptr_start == self.ptr - 2 {
-                return Token::Nothing;
-              }
-
-              let str = &self.raw_string[ptr_start..self.ptr-2];
-              return Token::Raw(String::from(str));
-            },
-            None => {
-              if ptr_start == self.ptr {
-                if self.ptr == self.raw_string.len() - 1 {
-                  return Token::End;
+        while let Some(ch) = self.pass() {
+            if ch == '.' {
+                if floated {
+                    return Token::Error(TokenError::WrongNumberSeq);
                 } else {
-                  return Token::Raw(String::from(""));
+                    floated = true;
+                }
+            }
+
+            if !ch.is_numeric() && ch != '.' {
+                self.rollback();
+
+                let str = &self.raw_string[ptr_start..self.ptr];
+
+              return if floated {
+                let num_result = str.parse::<f64>();
+
+                match num_result {
+                  Ok(num) => Token::Literal(PrimitiveType::Float(num)),
+                  Err(_) => Token::Error(TokenError::WrongNumberSeq),
                 }
               } else {
-                let str = &self.raw_string[ptr_start..self.ptr];
-                return Token::Raw(String::from(str));
+                let num_result = str.parse::<i64>();
+                match num_result {
+                  Ok(num) => Token::Literal(PrimitiveType::Integer(num)),
+                  Err(_) => Token::Error(TokenError::WrongNumberSeq),
+                }
               }
             }
-            _ => {} // pass
-        } 
-      }
-    } 
-    if ptr_start == self.ptr {
-      return Token::End;
-    } else {
-      let str = &self.raw_string[ptr_start..self.ptr];
-      return Token::Raw(String::from(str));
+        }
+
+        Token::Error(TokenError::WrongNumberSeq)
     }
-  }
 
-  fn tokenize_code(&mut self) -> Token {
-    self.skip_spaces();
+    fn tokenize_word(&mut self) -> Token {
+        let ptr_start = self.ptr;
 
-    match self.pass() {
-      Some(c) => match c {
-        '+' => Token::Single(SingleChar::Plus),
-        '-' => Token::Single(SingleChar::Minus),
-        '/' => Token::Single(SingleChar::Slash),
-        '*' => Token::Single(SingleChar::Star),
-        '&' => Token::Single(SingleChar::Ampersand),
-        '|' => Token::Single(SingleChar::Pipe),
-        '.' => Token::Single(SingleChar::Dot),
-        '(' => Token::Bracket(Bracket::RoundOpen),
-        ')' => Token::Bracket(Bracket::RoundClose),
-        '<' => match self.pass() {
-            Some('=') => Token::Compare(Compare::Le),
-            None => Token::Compare(Compare::Lt),
-            _ => {
-              self.rollback();
-              return Token::Compare(Compare::Lt);
+        while let Some(ch) = self.pass() {
+            if !ch.is_alphabetic() && !ch.is_numeric() && ch != '_' {
+                self.rollback();
+                break;
             }
-          },
-        '>' => match self.pass() {
-            Some('=') => Token::Compare(Compare::Ge),
-            None => Token::Compare(Compare::Gt),
-            _ => {
-              self.rollback();
-              return Token::Compare(Compare::Gt);
+        }
+
+        let word = &self.raw_string[ptr_start..self.ptr];
+
+        match word {
+            "if" => Token::Keyword(Keyword::If),
+            "else" => Token::Keyword(Keyword::Else),
+            "endif" => Token::Keyword(Keyword::EndIf),
+            "each" => Token::Keyword(Keyword::Each),
+            "as" => Token::Keyword(Keyword::As),
+            "endeach" => Token::Keyword(Keyword::EndEach),
+            "skip" => Token::Keyword(Keyword::Skip),
+            "true" => Token::Literal(PrimitiveType::Boolean(true)),
+            "false" => Token::Literal(PrimitiveType::Boolean(false)),
+            another => Token::Identifier(String::from(another)),
+        }
+    }
+
+    fn tokenize_raw(&mut self) -> Token {
+        let ptr_start = self.ptr;
+
+        while let Some(ch) = self.pass() {
+            if ch == '{' {
+                match self.peek(0) {
+                    Some('{') => {
+                        self.state = TokenizerState::Code;
+                        if ptr_start == self.ptr - 1 {
+                            return Token::Nothing;
+                        }
+
+                        let _ = &self.rollback();
+                        let str = &self.raw_string[ptr_start..self.ptr];
+                        return Token::Raw(String::from(str));
+                    }
+                    None => {
+                      return if ptr_start == self.ptr {
+                        if self.ptr == self.raw_string.len() - 1 {
+                          Token::End
+                        } else {
+                          Token::Raw(String::from(""))
+                        }
+                      } else {
+                        let str = &self.raw_string[ptr_start..self.ptr];
+                        Token::Raw(String::from(str))
+                      }
+                    }
+                    _ => {}
+                }
             }
-          },
-        '=' => match self.pass() {
-            Some('=') => Token::Compare(Compare::Eq),
-            None => Token::Error(TokenError::Unknown('=')),
-            _ => {
-              self.rollback();
-              return Token::Error(TokenError::Unknown('='));
-            }
-          },
-        '!' => match self.pass() {
-            Some('=') => Token::Compare(Compare::Ne),
-            None => Token::Single(SingleChar::Excl),
-            _ => {
-              self.rollback();
-              return Token::Single(SingleChar::Excl);
-            }
-          },
-        '}' => match self.pass() {
-            Some('}') => {
-              self.state = TokenizerState::Raw;
-              return Token::Nothing;
+        }
+        if ptr_start == self.ptr {
+            Token::End
+        } else {
+            let str = &self.raw_string[ptr_start..self.ptr];
+            Token::Raw(String::from(str))
+        }
+    }
+
+    fn tokenize_code(&mut self) -> Token {
+        self.skip_spaces();
+
+        match self.pass() {
+            Some(c) => match c {
+                '+' => Token::Single(SingleChar::Plus),
+                '-' => Token::Single(SingleChar::Minus),
+                '/' => Token::Single(SingleChar::Slash),
+                '*' => Token::Single(SingleChar::Star),
+                '&' => Token::Single(SingleChar::Ampersand),
+                '|' => Token::Single(SingleChar::Pipe),
+                '.' => Token::Single(SingleChar::Dot),
+                '(' => Token::Bracket(Bracket::RoundOpen),
+                ')' => Token::Bracket(Bracket::RoundClose),
+                '<' => match self.pass() {
+                    Some('=') => Token::Compare(Compare::Le),
+                    None => Token::Compare(Compare::Lt),
+                    _ => {
+                        self.rollback();
+                        Token::Compare(Compare::Lt)
+                    }
+                },
+                '>' => match self.pass() {
+                    Some('=') => Token::Compare(Compare::Ge),
+                    None => Token::Compare(Compare::Gt),
+                    _ => {
+                        self.rollback();
+                        Token::Compare(Compare::Gt)
+                    }
+                },
+                '=' => match self.pass() {
+                    Some('=') => Token::Compare(Compare::Eq),
+                    None => Token::Error(TokenError::Unknown('=')),
+                    _ => {
+                        self.rollback();
+                        Token::Error(TokenError::Unknown('='))
+                    }
+                },
+                '!' => match self.pass() {
+                    Some('=') => Token::Compare(Compare::Ne),
+                    None => Token::Single(SingleChar::Excl),
+                    _ => {
+                        self.rollback();
+                        Token::Single(SingleChar::Excl)
+                    }
+                },
+                '}' => match self.pass() {
+                    Some('}') => {
+                        self.state = TokenizerState::Raw;
+                        Token::CloseTag
+                    }
+                    Some(unknown) => Token::Error(TokenError::Unknown(unknown)),
+                    None => Token::End,
+                },
+                '{' => match self.pass() {
+                    Some('{') => Token::OpenTag,
+                    Some(unknown) => Token::Error(TokenError::Unknown(unknown)),
+                    None => Token::End,
+                },
+                '"' => self.tokenize_string(),
+                '0'..'9' => {
+                    self.rollback();
+                    self.tokenize_number()
+                }
+                x if x.is_alphabetic() || x == '_' => {
+                    self.rollback();
+                    self.tokenize_word()
+                }
+                unknown => Token::Error(TokenError::Unknown(unknown)),
             },
-            Some(unknown) => Token::Error(TokenError::Unknown(unknown)),
             None => Token::End,
-          },
-        '"' => self.tokenize_string(),
-        '0'..'9' => {
-          self.rollback();
-          self.tokenize_number()
-        },
-        x if x.is_alphabetic() || x == '_' => {
-          self.rollback();
-          self.tokenize_word()
-        },
-        unknown => Token::Error(TokenError::Unknown(unknown))
-      },
-      None => Token::End
+        }
     }
-  }
 
-  pub fn tokenize(&mut self) -> Token {
-    match self.state {
-      TokenizerState::Raw => self.tokenize_raw(),
-      TokenizerState::Code => self.tokenize_code()
+    pub fn tokenize(&mut self) -> Token {
+        match self.state {
+            TokenizerState::Raw => self.tokenize_raw(),
+            TokenizerState::Code => self.tokenize_code(),
+        }
     }
-  }
 
-  pub fn new(raw_string: String) -> Self {
-    Self {
-      state: TokenizerState::Raw,
-      raw_string: raw_string,
-      ptr: 0usize,
+    pub fn new(raw_string: String) -> Self {
+        Self {
+            state: TokenizerState::Raw,
+            raw_string,
+            ptr: 0usize,
+        }
     }
-  }
 }
 
 impl Iterator for Tokenizer {
     type Item = Token;
 
     fn next(&mut self) -> Option<Self::Item> {
-      let token = self.tokenize();
-      match token {
-        Token::Nothing => self.next(),
-        Token::End => {
-          match self.state {
-            TokenizerState::Code => {
-              self.state = TokenizerState::Raw;
-              Some(Token::Error(TokenError::UnclosedCodeSeq))
+        let token = self.tokenize();
+        match token {
+            Token::Nothing => self.next(),
+            Token::End => match self.state {
+                TokenizerState::Code => {
+                    self.state = TokenizerState::Raw;
+                    Some(Token::Error(TokenError::UnclosedCodeSeq))
+                }
+                _ => None,
             },
-            _ => None
-          }
-        },
-        token => Some(token)
-      }
+            token => Some(token),
+        }
     }
-}
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-
-  #[test]
-  fn should_tokenize_empty() {
-    let tokenizer = Tokenizer::new(String::from(""));
-
-    let tokens: Vec<Token> = tokenizer.collect();
-
-    assert_eq!(tokens.len(), 0);
-  }
-
-  #[test]
-  fn should_tokenize_raw() {
-    let _raw = String::from("
-      Just a simple raw. And it could be messsy:$#@123982mjsa_-sad1```\"sadasd\"
-      But there is nothing to be afraid of. {} teasing....a}}}}}}}{ { {");
-
-    let template = _raw.clone();
-
-    let tokenizer = Tokenizer::new(template);
-
-    let tokens: Vec<Token> = tokenizer.collect();
-
-    println!("{:?}", tokens);
-    assert_eq!(tokens.len(), 1);
-    assert!(matches!(
-      tokens.first().unwrap(), 
-      Token::Raw(_raw)
-    ));
-  }
-
-  #[test]
-  fn should_tokenize_identifier() {
-    let _identifier_name = String::from("variable1_name2");
-
-    let tokenizer = Tokenizer::new(String::from("{{variable1_name2}}"));
-
-    let tokens: Vec<Token> = tokenizer.collect();
-
-    assert_eq!(tokens.len(), 1);
-    assert!(matches!(
-      tokens.first().unwrap(), 
-      Token::Identifier(_identifier_name)
-    ));
-
-  }
-
-  #[test]
-  fn should_tokenize_string() {
-    let _string_value = String::from("Simple man");
-    let tokenizer = Tokenizer::new(String::from("{{\"Simple man\"}}"));
-
-    let tokens: Vec<Token> = tokenizer.collect();
-
-    assert_eq!(tokens.len(), 1);
-    assert!(matches!(
-      tokens.first().unwrap(), 
-      Token::Literal(PrimitiveType::String(_string_value))
-    ));
-  }
-
-  #[test]
-  fn should_tokenize_float() {
-    let tokenizer = Tokenizer::new(String::from("{{15.0}}"));
-
-    let tokens: Vec<Token> = tokenizer.collect();
-
-    assert_eq!(tokens.len(), 1);
-    assert!(matches!(
-      tokens.first().unwrap(), 
-      Token::Literal(PrimitiveType::Float(15.0))
-    ));
-  }
-
-  #[test]
-  fn should_tokenize_integer() {
-    let tokenizer = Tokenizer::new(String::from("{{150}}"));
-
-    let tokens: Vec<Token> = tokenizer.collect();
-
-    assert_eq!(tokens.len(), 1);
-    assert!(matches!(
-      tokens.first().unwrap(), 
-      Token::Literal(PrimitiveType::Integer(150))
-    ));
-  }
-
-  #[test]
-  fn should_tokenize_boolean() {
-    let tokenizer = Tokenizer::new(String::from("{{true}}"));
-
-    let tokens: Vec<Token> = tokenizer.collect();
-    
-    assert_eq!(tokens.len(), 1);
-    assert!(matches!(
-      tokens.first().unwrap(), 
-      Token::Literal(PrimitiveType::Boolean(true))
-    ));
-  }
-
-  #[test]
-  fn should_tokenize_raw_between() {
-    let tokenizer = Tokenizer::new(String::from(" {{var_1}} {{var_2}} "));
-
-    let tokens: Vec<Token> = tokenizer.collect();
-    
-    assert_eq!(tokens.len(), 5);
-
-    let _raw = String::from(" ");
-    let _var1_value = String::from("var_1");
-    let _var2_value = String::from("var_2");
-
-    match &tokens[..] {
-      [raw1, var1, raw2, var2, raw3] => {
-        assert!(matches!(raw1, Token::Raw(_raw)));
-        assert!(matches!(raw2, Token::Raw(_raw)));
-        assert!(matches!(raw3, Token::Raw(_raw)));
-        assert!(matches!(var1, Token::Identifier(_var1_value)));
-        assert!(matches!(var2, Token::Identifier(_var2_value)));
-      },
-      _ => {
-        assert!(false);
-      }
-    }
-  }
-
-  #[test]
-  fn should_tokenize_unclosed_string() {
-    let tokenizer = Tokenizer::new(String::from("{{\"like of string}}"));
-    
-    let tokens: Vec<Token> = tokenizer.collect();
-    
-    assert!(matches!(
-      tokens.first().unwrap(),
-      Token::Error(TokenError::UnclosedStringSeq)
-    ));
-  }
-
-  #[test]
-  fn should_tokenize_symbols() {
-    let tokenizer = Tokenizer::new(String::from("{{+ ! . - * / > >= < <= == !=}}"));
-
-    let tokens: Vec<Token> = tokenizer.collect();
-
-    match &tokens[..] {
-      [
-        plus, 
-        excl, 
-        dot, 
-        minus, 
-        star,
-        slash,
-        gt,
-        ge,
-        lt,
-        le,
-        eq,
-        ne
-      ] => {
-        assert!(matches!(plus, Token::Single(SingleChar::Plus)));
-        assert!(matches!(excl, Token::Single(SingleChar::Excl)));
-        assert!(matches!(dot, Token::Single(SingleChar::Dot)));
-        assert!(matches!(minus, Token::Single(SingleChar::Minus)));
-        assert!(matches!(star, Token::Single(SingleChar::Star)));
-        assert!(matches!(slash, Token::Single(SingleChar::Slash)));
-        assert!(matches!(gt, Token::Compare(Compare::Gt)));
-        assert!(matches!(ge, Token::Compare(Compare::Ge)));
-        assert!(matches!(lt, Token::Compare(Compare::Lt)));
-        assert!(matches!(le, Token::Compare(Compare::Le)));
-        assert!(matches!(eq, Token::Compare(Compare::Eq)));
-        assert!(matches!(ne, Token::Compare(Compare::Ne)));
-      },
-      _ => {
-        assert!(false);
-      }
-    }
-  }
-  
-  #[test]
-  fn should_tokenize_keywords() {
-    let tokenizer = Tokenizer::new(String::from("{{if else endif each as endeach skip}}"));
-
-    let tokens: Vec<Token> = tokenizer.collect();
-
-    match &tokens[..] {
-      [
-        if_kword, 
-        else_kword, 
-        endif_kword, 
-        each_kword, 
-        as_kword, 
-        endeach_kword, 
-        skip_kword
-      ] => {
-        assert!(matches!(if_kword, Token::Keyword(Keyword::If)));
-        assert!(matches!(else_kword, Token::Keyword(Keyword::Else)));
-        assert!(matches!(endif_kword, Token::Keyword(Keyword::EndIf)));
-        assert!(matches!(each_kword, Token::Keyword(Keyword::Each)));
-        assert!(matches!(as_kword, Token::Keyword(Keyword::As)));
-        assert!(matches!(endeach_kword, Token::Keyword(Keyword::EndEach)));
-        assert!(matches!(skip_kword, Token::Keyword(Keyword::Skip)));
-      },
-      _ => {
-        assert!(false);
-      }
-    }
-  }
 }

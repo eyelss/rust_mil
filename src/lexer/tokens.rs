@@ -62,6 +62,8 @@ pub enum Token {
   // Sign(Sign),
   // Unknown(char),
   Error(TokenError),
+  CloseTag,
+  OpenTag,
   Nothing,
   End
 }

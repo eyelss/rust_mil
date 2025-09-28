@@ -16,6 +16,15 @@ impl Visitable for Expression {
 }
 
 impl TemplateParser {
+  fn new(
+    tokens: Vec<Token>
+  ) -> TemplateParser {
+    TemplateParser {
+      tokens,
+      ptr: 0,
+    }
+  }
+
   fn parse<T: DataSource>(
     &mut self,
     source: T
@@ -26,14 +35,5 @@ impl TemplateParser {
     //   }
     // }
     todo!()
-  }
-
-  fn new(
-    tokens: Vec<Token>
-  ) -> TemplateParser {
-    TemplateParser { 
-      tokens: tokens,
-      ptr: 0,
-    }
   }
 }
