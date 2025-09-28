@@ -8,6 +8,15 @@ pub enum ASTree {
 }
 
 pub enum ASTNode {
+    If {
+        condition: Expression,
+        then_branch: Vec<ASTNode>,
+        else_branch: Option<Box<ASTNode>>
+    },
+    Each {
+        iter: Expression,
+        body: Vec<ASTNode>
+    },
     Prgm(Program),
     Expr(Expression),
     Grup(Expression),
