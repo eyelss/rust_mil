@@ -35,7 +35,7 @@ impl Visitor {
                     PrimitiveType::Float(v) => v.to_string(),
                     PrimitiveType::Null => String::from("null"),
                 },
-                LeafedExpression::Identifier(id) => id[0].to_string(),
+                LeafedExpression::Identifier(id) => id.join("."),
             },
         }
     }
