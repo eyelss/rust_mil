@@ -59,8 +59,6 @@ pub enum Token {
   Bracket(Bracket),
   Single(SingleChar),
   Compare(Compare),
-  // Sign(Sign),
-  // Unknown(char),
   Error(TokenError),
   CloseTag,
   OpenTag,

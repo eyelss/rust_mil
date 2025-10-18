@@ -116,6 +116,7 @@ impl Tokenizer {
             "skip" => Token::Keyword(Keyword::Skip),
             "true" => Token::Literal(PrimitiveType::Boolean(true)),
             "false" => Token::Literal(PrimitiveType::Boolean(false)),
+            "null" => Token::Literal(PrimitiveType::Null),
             another => Token::Identifier(String::from(another)),
         }
     }
@@ -128,11 +129,12 @@ impl Tokenizer {
                 match self.peek(0) {
                     Some('{') => {
                         self.state = TokenizerState::Code;
-                        if ptr_start == self.ptr - 1 {
+                        let _ = &self.rollback();
+
+                        if ptr_start == self.ptr {
                             return Token::Nothing;
                         }
 
-                        let _ = &self.rollback();
                         let str = &self.raw_string[ptr_start..self.ptr];
                         return Token::Raw(String::from(str));
                     }
